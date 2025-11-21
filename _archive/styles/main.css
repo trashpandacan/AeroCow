@@ -1,0 +1,221 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: radial-gradient(circle at top, #1b1b2b, #050507 60%);
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.control-panel {
+    width: 360px;
+    background: rgba(12, 14, 28, 0.92);
+    border-right: 1px solid rgba(0, 255, 255, 0.2);
+    padding: 24px;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+}
+
+.control-panel h1 {
+    font-size: 26px;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, #3cfafc, #297bff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.tagline {
+    font-size: 13px;
+    color: #9faac8;
+}
+
+.control-section {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #44e5ff;
+    margin-bottom: 14px;
+}
+
+.control-item {
+    margin-bottom: 16px;
+}
+
+label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #c8d0ff;
+    margin-bottom: 6px;
+}
+
+select,
+button,
+input[type="range"] {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid rgba(68, 229, 255, 0.3);
+    background: rgba(17, 25, 54, 0.8);
+    color: #f0f4ff;
+    font-size: 13px;
+    padding: 8px 10px;
+}
+
+input[type="range"] {
+    height: 4px;
+    background: linear-gradient(90deg, rgba(0, 255, 255, 0.36), rgba(41, 123, 255, 0.5));
+    border: none;
+    padding: 0;
+    margin: 6px 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #41f7ff;
+    box-shadow: 0 0 10px rgba(65, 247, 255, 0.6);
+}
+
+button {
+    cursor: pointer;
+    background: linear-gradient(120deg, rgba(0, 255, 255, 0.15), rgba(0, 128, 255, 0.25));
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.35);
+}
+
+.mini-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.checkbox-container input {
+    width: 18px;
+    height: 18px;
+}
+
+.simulator-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 26px;
+    background: rgba(9, 14, 34, 0.9);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.solvers-status {
+    font-size: 13px;
+    color: #9fb3ff;
+}
+
+.fps-readout {
+    font-size: 14px;
+}
+
+.view-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+}
+
+#fieldCanvas {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+.three-container {
+    flex: 1;
+    min-height: 100%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.stats {
+    background: rgba(12, 15, 36, 0.8);
+    padding: 16px 26px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    font-size: 13px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.stat-label {
+    color: #9eaacc;
+}
+
+.stat-value {
+    font-weight: 600;
+}
+
+.value-display {
+    font-size: 11px;
+    color: #4bffd7;
+    margin-left: 6px;
+}
+
+.hint {
+    font-size: 11px;
+    color: #9faac8;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+@media (max-width: 1080px) {
+    .container {
+        flex-direction: column;
+    }
+    .control-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroCow Aerodynamic Lab</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="control-panel">
+            <section class="branding">
+                <h1>AeroCow Lab</h1>
+                <p class="tagline">Modular CFD playground with 2D and 3D solvers.</p>
+            </section>
+
+            <section class="control-section">
+                <h2 class="section-title">Simulation Setup</h2>
+                <div class="control-item">
+                    <label for="dimensionSelect">Dimension</label>
+                    <select id="dimensionSelect">
+                        <option value="2d" selected>2D Field</option>
+                        <option value="3d">3D Volume</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="solverSelect">Solver</label>
+                    <select id="solverSelect">
+                        <option value="lbm2d">LBM 2D (D2Q9)</option>
+                        <option value="ns2d">Navier-Stokes 2D</option>
+                        <option value="potential2d">Potential Flow 2D</option>
+                        <option value="vortex2d">Vortex Lattice 2D</option>
+                        <option value="lbm3d">LBM 3D (D3Q19)</option>
+                        <option value="euler3d">Euler 3D (High Speed)</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="gridResolution">Grid Resolution <span class="value-display" id="resolutionValue">256×128</span></label>
+                    <input type="range" id="gridResolution" min="64" max="384" step="32" value="256">
+                </div>
+                <div class="control-item">
+                    <label for="depthResolution">Volume Depth <span class="value-display" id="depthValue">64</span></label>
+                    <input type="range" id="depthResolution" min="32" max="128" step="16" value="64">
+                </div>
+                <div class="control-item">
+                    <label for="objectSelect">Geometry</label>
+                    <select id="objectSelect">
+                        <option value="airfoil">NACA Airfoil</option>
+                        <option value="cylinder">Cylinder</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="wing">Finite Wing</option>
+                        <option value="cow">Aero Cow</option>
+                        <option value="custom">Custom STL</option>
+                    </select>
+                    <input type="file" id="geometryUpload" accept=".stl" hidden>
+                    <button id="uploadGeometry">Upload STL</button>
+                </div>
+                <div class="control-item">
+                    <label for="meshPreset">Preset Mesh Library</label>
+                    <select id="meshPreset">
+                        <option value="">None (analytic primitive)</option>
+                    </select>
+                    <p class="hint">Loads bundled STLs (Aero Cow, Teapot, Humanoid, Space Invader). Best experienced in 3D.</p>
+                </div>
+                <div class="control-item slider-row">
+                    <label for="angleSlider">Angle of Attack <span class="value-display" id="angleValue">0°</span></label>
+                    <input type="range" id="angleSlider" min="-15" max="20" step="1" value="0">
+                </div>
+                <div class="control-item slider-row">
+                    <label for="reynoldsSlider">Reynolds <span class="value-display" id="reynoldsValue">5,000</span></label>
+                    <input type="range" id="reynoldsSlider" min="500" max="20000" step="500" value="5000">
+                </div>
+                <div class="control-item slider-row">
+                    <label for="machSlider">Mach <span class="value-display" id="machValue">0.15</span></label>
+                    <input type="range" id="machSlider" min="0.02" max="5.0" step="0.01" value="0.15">
+                </div>
+                <div class="control-item mini-grid">
+                    <button id="startStopBtn">Pause</button>
+                    <button id="resetBtn">Reset</button>
+                </div>
+            </section>
+
+            <section class="control-section">
+                <h2 class="section-title">Visualization Layers</h2>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="layerVelocity" checked>
+                    <label for="layerVelocity">Velocity Magnitude</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="layerPressure">
+                    <label for="layerPressure">Pressure Field</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="layerVorticity" checked>
+                    <label for="layerVorticity">Vorticity</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="layerStream" >
+                    <label for="layerStream">Streamlines / Particles</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="layerWindTunnel" checked>
+                    <label for="layerWindTunnel">Wind Tunnel Flow</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="layerIso">
+                    <label for="layerIso">3D Iso-Surface</label>
+                </div>
+            </section>
+
+            <section class="control-section">
+                <h2 class="section-title">Benchmarks</h2>
+                <div class="mini-grid">
+                    <button data-scenario="cylinder">Cylinder Re=3900</button>
+                    <button data-scenario="airfoil">NACA 0012 Cruise</button>
+                    <button data-scenario="wing">Finite Wing Stall</button>
+                    <button data-scenario="cavity">3D Lid Cavity</button>
+                </div>
+            </section>
+        </aside>
+
+        <main class="simulator-area">
+            <header class="header">
+                <div>
+                    <p class="solvers-status">Solver: <span id="activeSolver">LBM 2D</span></p>
+                    <p class="solvers-status">Mode: <span id="activeMode">2D Field</span></p>
+                </div>
+                <div class="fps-readout">FPS: <span id="fpsValue">0</span></div>
+            </header>
+
+            <section class="view-wrapper">
+                <canvas id="fieldCanvas"></canvas>
+                <div id="threeContainer" class="three-container hidden"></div>
+            </section>
+
+            <section class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Iterations</span>
+                    <span class="stat-value" id="iterationsValue">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Drag Coefficient</span>
+                    <span class="stat-value" id="dragCoeff">0.0000</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Lift Coefficient</span>
+                    <span class="stat-value" id="liftCoeff">0.0000</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">L/D Ratio</span>
+                    <span class="stat-value" id="ldRatio">0.00</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Strouhal (est)</span>
+                    <span class="stat-value" id="strouhal">0.00</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>

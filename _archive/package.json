@@ -1,0 +1,10 @@
+{
+  "name": "aerocow",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "smoke": "node scripts/smokeTest.js",
+    "regression": "node scripts/regressionTest.js"
+  }
+}

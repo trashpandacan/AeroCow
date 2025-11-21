@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerodynamic Flow Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .control-panel {
+            width: 320px;
+            background: rgba(20, 20, 35, 0.95);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(100, 200, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .simulator-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 15px 20px;
+            background: rgba(20, 20, 35, 0.8);
+            border-bottom: 1px solid rgba(100, 200, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 24px;
+            background: linear-gradient(90deg, #00ffff, #0080ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        canvas {
+            flex: 1;
+            cursor: grab;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .control-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+        }
+
+        .control-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00ffff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-item {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.3) 0%, rgba(0, 128, 255, 0.3) 100%);
+            outline: none;
+            border-radius: 3px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, #00ffff 0%, #0080ff 100%);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, #00ffff 0%, #0080ff 100%);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(30, 30, 50, 0.8);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            color: #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:hover {
+            border-color: rgba(0, 255, 255, 0.5);
+            background: rgba(40, 40, 60, 0.9);
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(0, 128, 255, 0.2) 100%);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.3) 0%, rgba(0, 128, 255, 0.3) 100%);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .value-display {
+            display: inline-block;
+            min-width: 45px;
+            padding: 2px 6px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 11px;
+            color: #00ffff;
+            margin-left: 8px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 0;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .stats {
+            background: rgba(30, 30, 50, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #a0a0a0;
+        }
+
+        .stat-value {
+            color: #00ffff;
+            font-weight: 600;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .preset-btn {
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 35, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            font-size: 12px;
+            max-width: 250px;
+            backdrop-filter: blur(10px);
+        }
+
+        .legend {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(100, 200, 255, 0.2);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="control-panel">
+            <h2 style="margin-bottom: 20px; color: #00ffff;">Wind Tunnel Controls</h2>
+            
+            <div class="control-section">
+                <div class="section-title">Object Selection</div>
+                <div class="control-item">
+                    <label>Test Object</label>
+                    <select id="objectSelect">
+                        <option value="airfoil">NACA Airfoil</option>
+                        <option value="circle">Sphere/Cylinder</option>
+                        <option value="square">Cube/Box</option>
+                        <option value="triangle">Wedge</option>
+                        <option value="car">Car Profile</option>
+                        <option value="bullet">Bullet</option>
+                        <option value="wing">Aircraft Wing</option>
+                        <option value="teardrop">Teardrop</option>
+                    </select>
+                </div>
+                <div class="preset-grid">
+                    <button class="preset-btn" onclick="loadPreset('subsonic')">Subsonic</button>
+                    <button class="preset-btn" onclick="loadPreset('transonic')">Transonic</button>
+                    <button class="preset-btn" onclick="loadPreset('laminar')">Laminar</button>
+                    <button class="preset-btn" onclick="loadPreset('turbulent')">Turbulent</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Flow Parameters</div>
+                <div class="control-item">
+                    <label>Wind Speed <span id="speedValue" class="value-display">50 m/s</span></label>
+                    <input type="range" id="windSpeed" min="10" max="200" value="50" step="5">
+                </div>
+                <div class="control-item">
+                    <label>Reynolds Number <span id="reynoldsValue" class="value-display">10000</span></label>
+                    <input type="range" id="reynolds" min="100" max="100000" value="10000" step="100">
+                </div>
+                <div class="control-item">
+                    <label>Air Density <span id="densityValue" class="value-display">1.2 kg/m³</span></label>
+                    <input type="range" id="density" min="0.5" max="2" value="1.2" step="0.1">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Object Orientation</div>
+                <div class="control-item">
+                    <label>Angle of Attack <span id="angleValue" class="value-display">0°</span></label>
+                    <input type="range" id="angle" min="-45" max="45" value="0" step="1">
+                </div>
+                <div class="control-item">
+                    <label>Object Size <span id="sizeValue" class="value-display">1.0x</span></label>
+                    <input type="range" id="objectSize" min="0.5" max="2" value="1" step="0.1">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Visualization</div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showStreamlines" checked>
+                    <label for="showStreamlines">Streamlines</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showParticles" checked>
+                    <label for="showParticles">Flow Particles</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showPressure" checked>
+                    <label for="showPressure">Pressure Field</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showVorticity">
+                    <label for="showVorticity">Vorticity</label>
+                </div>
+                <div class="control-item">
+                    <label>Particle Density <span id="particleDensityValue" class="value-display">100</span></label>
+                    <input type="range" id="particleDensity" min="50" max="300" value="100" step="10">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Analysis Data</div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Drag Coefficient:</span>
+                        <span class="stat-value" id="dragCoeff">0.35</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Lift Coefficient:</span>
+                        <span class="stat-value" id="liftCoeff">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Pressure Differential:</span>
+                        <span class="stat-value" id="pressureDiff">0.0 Pa</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Flow Separation:</span>
+                        <span class="stat-value" id="flowSeparation">None</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wake Width:</span>
+                        <span class="stat-value" id="wakeWidth">0.0 m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <button onclick="resetSimulation()">Reset Simulation</button>
+                <button onclick="exportData()" style="margin-top: 10px;">Export Analysis</button>
+            </div>
+        </div>
+
+        <div class="simulator-area">
+            <div class="header">
+                <h1>Aerodynamic Flow Simulator</h1>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="toggleAnimation()" style="width: auto; padding: 8px 16px;">⏯️ Pause</button>
+                    <button onclick="captureFrame()" style="width: auto; padding: 8px 16px;">📸 Capture</button>
+                </div>
+            </div>
+            <canvas id="flowCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <div style="font-weight: 600; margin-bottom: 10px;">Flow Visualization</div>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(90deg, blue, cyan);"></div>
+                <span>Low Pressure</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(90deg, green, yellow);"></div>
+                <span>Normal Flow</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(90deg, orange, red);"></div>
+                <span>High Pressure</span>
+            </div>
+        </div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(100, 200, 255, 0.2); font-size: 11px; color: #888;">
+            Click and drag to move object<br>
+            Scroll to zoom in/out
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('flowCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let animationId;
+        let isPaused = false;
+        
+        // Simulation parameters
+        let windSpeed = 50;
+        let reynolds = 10000;
+        let density = 1.2;
+        let angle = 0;
+        let objectSize = 1;
+        let currentObject = 'airfoil';
+        
+        // Visualization options
+        let showStreamlines = true;
+        let showParticles = true;
+        let showPressure = true;
+        let showVorticity = false;
+        let particleDensity = 100;
+        
+        // Flow field
+        let flowField = [];
+        let particles = [];
+        let streamlines = [];
+        let pressureField = [];
+        
+        // Object position
+        let objectX = 0;
+        let objectY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            objectX = canvas.width * 0.3;
+            objectY = canvas.height * 0.5;
+            initializeSimulation();
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Initialize simulation
+        function initializeSimulation() {
+            // Create flow field grid
+            const gridSize = 20;
+            flowField = [];
+            pressureField = [];
+            
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    flowField.push({
+                        x: x,
+                        y: y,
+                        vx: windSpeed,
+                        vy: 0,
+                        pressure: 0
+                    });
+                }
+            }
+            
+            // Initialize particles
+            particles = [];
+            for (let i = 0; i < particleDensity; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width * 0.2,
+                    y: Math.random() * canvas.height,
+                    vx: windSpeed,
+                    vy: 0,
+                    life: 1,
+                    trail: []
+                });
+            }
+            
+            updateFlowField();
+        }
+        
+        // Update flow field based on object
+        function updateFlowField() {
+            const angleRad = angle * Math.PI / 180;
+            
+            flowField.forEach(point => {
+                const dx = point.x - objectX;
+                const dy = point.y - objectY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Calculate flow disturbance based on object shape
+                let disturbance = calculateDisturbance(dx, dy, dist, angleRad);
+                
+                // Apply flow equations
+                const baseVx = windSpeed;
+                const baseVy = 0;
+                
+                point.vx = baseVx + disturbance.vx;
+                point.vy = baseVy + disturbance.vy;
+                
+                // Calculate pressure
+                const velocity = Math.sqrt(point.vx * point.vx + point.vy * point.vy);
+                point.pressure = 0.5 * density * (windSpeed * windSpeed - velocity * velocity);
+            });
+            
+            updateAnalysisData();
+        }
+        
+        // Calculate flow disturbance based on object shape
+        function calculateDisturbance(dx, dy, dist, angleRad) {
+            let vx = 0, vy = 0;
+            const size = 40 * objectSize;
+            
+            // Rotate coordinates
+            const cosA = Math.cos(-angleRad);
+            const sinA = Math.sin(-angleRad);
+            const rotX = dx * cosA - dy * sinA;
+            const rotY = dx * sinA + dy * cosA;
+            
+            switch (currentObject) {
+                case 'circle':
+                    // Cylinder flow (potential flow theory)
+                    if (dist > size) {
+                        const strength = size * size / (dist * dist);
+                        vx = -windSpeed * strength * (1 - 2 * dy * dy / (dist * dist));
+                        vy = windSpeed * strength * 2 * dx * dy / (dist * dist);
+                    }
+                    break;
+                    
+                case 'airfoil':
+                    // NACA airfoil approximation
+                    if (Math.abs(rotX) < size * 2 && Math.abs(rotY) < size * 0.5) {
+                        const camber = 0.1;
+                        const thickness = 0.15;
+                        const chordPosition = (rotX + size * 2) / (size * 4);
+                        
+                        if (chordPosition >= 0 && chordPosition <= 1) {
+                            const lift = camber * Math.sin(Math.PI * chordPosition);
+                            vx = -windSpeed * 0.3;
+                            vy = windSpeed * lift * 2;
+                        }
+                    } else if (dist < size * 3) {
+                        // Flow around airfoil
+                        const strength = size / dist;
+                        vx = windSpeed * strength * Math.sin(angleRad) * 0.5;
+                        vy = -windSpeed * strength * Math.cos(angleRad) * 0.3;
+                    }
+                    break;
+                    
+                case 'square':
+                    // Box/cube flow
+                    if (Math.abs(rotX) < size && Math.abs(rotY) < size) {
+                        vx = -windSpeed * 0.8;
+                        vy = 0;
+                    } else if (Math.abs(rotX) < size * 2 && Math.abs(rotY) < size * 1.5) {
+                        // Separated flow region
+                        vx = -windSpeed * 0.3 * (1 - Math.abs(rotX) / (size * 2));
+                        vy = windSpeed * 0.2 * Math.sign(rotY) * (1 - Math.abs(rotY) / (size * 1.5));
+                    }
+                    break;
+                    
+                case 'triangle':
+                    // Wedge flow
+                    const wedgeAngle = Math.atan2(Math.abs(rotY), rotX + size);
+                    if (rotX > -size && rotX < size && Math.abs(rotY) < size * Math.abs(rotX + size) / (2 * size)) {
+                        vx = -windSpeed * 0.4;
+                        vy = windSpeed * 0.3 * Math.sign(rotY);
+                    } else if (dist < size * 2) {
+                        vx = windSpeed * 0.2 * Math.cos(wedgeAngle);
+                        vy = windSpeed * 0.2 * Math.sin(wedgeAngle) * Math.sign(rotY);
+                    }
+                    break;
+                    
+                case 'car':
+                    // Simplified car profile
+                    const carLength = size * 3;
+                    const carHeight = size;
+                    if (rotX > -carLength/2 && rotX < carLength/2 && Math.abs(rotY) < carHeight) {
+                        const profile = 1 - Math.pow((rotX / (carLength/2)), 2);
+                        vx = -windSpeed * 0.5 * profile;
+                        vy = windSpeed * 0.2 * Math.sign(rotY) * (1 - Math.abs(rotY) / carHeight);
+                    }
+                    break;
+                    
+                case 'bullet':
+                    // Streamlined bullet shape
+                    const bulletLength = size * 2.5;
+                    if (Math.abs(rotX) < bulletLength && Math.abs(rotY) < size * 0.4) {
+                        const taper = 1 - Math.pow((rotX / bulletLength), 2);
+                        vx = -windSpeed * 0.2 * taper;
+                        vy = windSpeed * 0.1 * rotY / size;
+                    }
+                    break;
+                    
+                case 'wing':
+                    // Aircraft wing with high aspect ratio
+                    if (Math.abs(rotX) < size * 3 && Math.abs(rotY) < size * 0.3) {
+                        const chordPos = (rotX + size * 3) / (size * 6);
+                        const liftCoeff = 0.3 * Math.sin(Math.PI * chordPos);
+                        vx = -windSpeed * 0.2;
+                        vy = windSpeed * liftCoeff * (1 + angleRad / 10);
+                    }
+                    break;
+                    
+                case 'teardrop':
+                    // Streamlined teardrop
+                    const tearLength = size * 2;
+                    if (dist < tearLength) {
+                        const streamline = Math.exp(-dist / tearLength);
+                        vx = -windSpeed * 0.15 * streamline;
+                        vy = windSpeed * 0.05 * (dy / dist) * streamline;
+                    }
+                    break;
+            }
+            
+            // Add vortex shedding for high Reynolds numbers
+            if (reynolds > 5000) {
+                const vortexStrength = (reynolds - 5000) / 95000;
+                const time = Date.now() / 1000;
+                vy += Math.sin(time * 5 + dx / 50) * vortexStrength * windSpeed * 0.1;
+            }
+            
+            // Rotate disturbance back
+            const finalVx = vx * cosA + vy * sinA;
+            const finalVy = -vx * sinA + vy * cosA;
+            
+            return { vx: finalVx, vy: finalVy };
+        }
+        
+        // Draw object
+        function drawObject() {
+            ctx.save();
+            ctx.translate(objectX, objectY);
+            ctx.rotate(angle * Math.PI / 180);
+            
+            const size = 40 * objectSize;
+            
+            ctx.fillStyle = 'rgba(50, 50, 70, 0.9)';
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            
+            switch (currentObject) {
+                case 'circle':
+                    ctx.beginPath();
+                    ctx.arc(0, 0, size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                    
+                case 'airfoil':
+                    ctx.beginPath();
+                    ctx.moveTo(-size * 2, 0);
+                    ctx.quadraticCurveTo(-size, -size * 0.3, 0, -size * 0.2);
+                    ctx.quadraticCurveTo(size, -size * 0.1, size * 2, 0);
+                    ctx.quadraticCurveTo(size, size * 0.05, 0, size * 0.1);
+                    ctx.quadraticCurveTo(-size, size * 0.15, -size * 2, 0);
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                    
+                case 'square':
+                    ctx.fillRect(-size, -size, size * 2, size * 2);
+                    ctx.strokeRect(-size, -size, size * 2, size * 2);
+                    break;
+                    
+                case 'triangle':
+                    ctx.beginPath();
+                    ctx.moveTo(-size, -size);
+                    ctx.lineTo(size, 0);
+                    ctx.lineTo(-size, size);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                    
+                case 'car':
+                    ctx.beginPath();
+                    ctx.moveTo(-size * 1.5, size * 0.3);
+                    ctx.lineTo(-size * 1.5, -size * 0.2);
+                    ctx.quadraticCurveTo(-size * 1.2, -size * 0.6, -size * 0.5, -size * 0.7);
+                    ctx.lineTo(size * 0.5, -size * 0.7);
+                    ctx.quadraticCurveTo(size * 1.2, -size * 0.6, size * 1.5, -size * 0.2);
+                    ctx.lineTo(size * 1.5, size * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                    
+                case 'bullet':
+                    ctx.beginPath();
+                    ctx.moveTo(-size * 1.25, 0);
+                    ctx.quadraticCurveTo(-size * 1.25, -size * 0.3, -size * 0.75, -size * 0.35);
+                    ctx.lineTo(size * 0.75, -size * 0.35);
+                    ctx.quadraticCurveTo(size * 1.25, -size * 0.2, size * 1.25, 0);
+                    ctx.quadraticCurveTo(size * 1.25, size * 0.2, size * 0.75, size * 0.35);
+                    ctx.lineTo(-size * 0.75, size * 0.35);
+                    ctx.quadraticCurveTo(-size * 1.25, size * 0.3, -size * 1.25, 0);
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                    
+                case 'wing':
+                    ctx.beginPath();
+                    ctx.moveTo(-size * 3, 0);
+                    ctx.quadraticCurveTo(-size * 1.5, -size * 0.15, 0, -size * 0.1);
+                    ctx.quadraticCurveTo(size * 1.5, -size * 0.05, size * 3, 0);
+                    ctx.quadraticCurveTo(size * 1.5, size * 0.03, 0, size * 0.05);
+                    ctx.quadraticCurveTo(-size * 1.5, size * 0.08, -size * 3, 0);
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                    
+                case 'teardrop':
+                    ctx.beginPath();
+                    ctx.arc(-size * 0.5, 0, size, -Math.PI/2, Math.PI/2);
+                    ctx.quadraticCurveTo(size * 1.5, 0, size * 1, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+            }
+            
+            ctx.restore();
+        }
+        
+        // Draw pressure field
+        function drawPressureField() {
+            if (!showPressure) return;
+            
+            const gridSize = 20;
+            
+            flowField.forEach(point => {
+                const pressure = point.pressure;
+                const normalizedPressure = Math.max(-1, Math.min(1, pressure / 1000));
+                
+                let r, g, b;
+                if (normalizedPressure < 0) {
+                    // Blue to cyan for low pressure
+                    r = 0;
+                    g = Math.floor(128 - normalizedPressure * 128);
+                    b = 255;
+                } else {
+                    // Yellow to red for high pressure
+                    r = 255;
+                    g = Math.floor(255 - normalizedPressure * 128);
+                    b = 0;
+                }
+                
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.2)`;
+                ctx.fillRect(point.x - gridSize/2, point.y - gridSize/2, gridSize, gridSize);
+            });
+        }
+        
+        // Draw streamlines
+        function drawStreamlines() {
+            if (!showStreamlines) return;
+            
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            
+            for (let y = 50; y < canvas.height; y += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                
+                let x = 0;
+                let currentY = y;
+                
+                while (x < canvas.width) {
+                    // Find nearest flow field point
+                    let minDist = Infinity;
+                    let nearestPoint = null;
+                    
+                    flowField.forEach(point => {
+                        const dist = Math.sqrt((point.x - x) * (point.x - x) + (point.y - currentY) * (point.y - currentY));
+                        if (dist < minDist) {
+                            minDist = dist;
+                            nearestPoint = point;
+                        }
+                    });
+                    
+                    if (nearestPoint) {
+                        const step = 5;
+                        x += step;
+                        currentY += (nearestPoint.vy / nearestPoint.vx) * step;
+                        
+                        if (currentY > 0 && currentY < canvas.height) {
+                            ctx.lineTo(x, currentY);
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                
+                ctx.stroke();
+            }
+        }
+        
+        // Update and draw particles
+        function updateParticles() {
+            if (!showParticles) return;
+            
+            particles.forEach((particle, index) => {
+                // Find flow velocity at particle position
+                let minDist = Infinity;
+                let nearestPoint = null;
+                
+                flowField.forEach(point => {
+                    const dist = Math.sqrt((point.x - particle.x) ** 2 + (point.y - particle.y) ** 2);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearestPoint = point;
+                    }
+                });
+                
+                if (nearestPoint) {
+                    particle.vx = nearestPoint.vx;
+                    particle.vy = nearestPoint.vy;
+                }
+                
+                // Update position
+                particle.x += particle.vx * 0.1;
+                particle.y += particle.vy * 0.1;
+                
+                // Add to trail
+                particle.trail.push({ x: particle.x, y: particle.y });
+                if (particle.trail.length > 20) {
+                    particle.trail.shift();
+                }
+                
+                // Reset if out of bounds
+                if (particle.x > canvas.width || particle.y < 0 || particle.y > canvas.height) {
+                    particle.x = Math.random() * 50;
+                    particle.y = Math.random() * canvas.height;
+                    particle.trail = [];
+                }
+                
+                // Draw particle
+                const speed = Math.sqrt(particle.vx ** 2 + particle.vy ** 2);
+                const hue = 180 - Math.min(180, (speed / windSpeed) * 90);
+                
+                ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.8)`;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw trail
+                if (particle.trail.length > 1) {
+                    ctx.strokeStyle = `hsla(${hue}, 100%, 50%, 0.3)`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(particle.trail[0].x, particle.trail[0].y);
+                    particle.trail.forEach(point => {
+                        ctx.lineTo(point.x, point.y);
+                    });
+                    ctx.stroke();
+                }
+            });
+        }
+        
+        // Draw vorticity
+        function drawVorticity() {
+            if (!showVorticity) return;
+            
+            const gridSize = 30;
+            
+            for (let i = 0; i < flowField.length - 1; i++) {
+                const point = flowField[i];
+                const nextX = flowField[i + 1];
+                
+                if (nextX && Math.abs(point.x - nextX.x) < gridSize * 1.5) {
+                    const dvx_dy = nextX.vx - point.vx;
+                    const dvy_dx = nextX.vy - point.vy;
+                    const vorticity = dvy_dx - dvx_dy;
+                    
+                    if (Math.abs(vorticity) > 0.5) {
+                        const intensity = Math.min(1, Math.abs(vorticity) / 10);
+                        ctx.strokeStyle = vorticity > 0 ? 
+                            `rgba(255, 100, 100, ${intensity})` : 
+                            `rgba(100, 100, 255, ${intensity})`;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        // Update analysis data
+        function updateAnalysisData() {
+            // Calculate coefficients based on object and flow
+            let cd = 0.35; // Default drag coefficient
+            let cl = 0; // Lift coefficient
+            
+            switch (currentObject) {
+                case 'circle':
+                    cd = 0.47 - (reynolds / 100000) * 0.1;
+                    break;
+                case 'airfoil':
+                    cd = 0.012 + Math.abs(angle) * 0.001;
+                    cl = angle * 0.11; // ~6.28 per radian for thin airfoil
+                    break;
+                case 'square':
+                    cd = 1.05 - Math.abs(angle) * 0.005;
+                    break;
+                case 'triangle':
+                    cd = 0.8 - Math.abs(angle) * 0.008;
+                    cl = angle * 0.05;
+                    break;
+                case 'car':
+                    cd = 0.28 + Math.abs(angle) * 0.002;
+                    break;
+                case 'bullet':
+                    cd = 0.15 + Math.abs(angle) * 0.001;
+                    break;
+                case 'wing':
+                    cd = 0.025 + Math.abs(angle) * 0.0015;
+                    cl = angle * 0.105;
+                    break;
+                case 'teardrop':
+                    cd = 0.09 + Math.abs(angle) * 0.0008;
+                    break;
+            }
+            
+            // Update display
+            document.getElementById('dragCoeff').textContent = cd.toFixed(3);
+            document.getElementById('liftCoeff').textContent = cl.toFixed(3);
+            
+            const pressureDiff = Math.abs(0.5 * density * windSpeed * windSpeed * cl);
+            document.getElementById('pressureDiff').textContent = pressureDiff.toFixed(1) + ' Pa';
+            
+            const separation = reynolds > 10000 ? 'Turbulent' : reynolds > 2000 ? 'Transitional' : 'None';
+            document.getElementById('flowSeparation').textContent = separation;
+            
+            const wake = (cd * 40 * objectSize).toFixed(1);
+            document.getElementById('wakeWidth').textContent = wake + ' px';
+        }
+        
+        // Animation loop
+        function animate() {
+            if (!isPaused) {
+                // Clear canvas
+                ctx.fillStyle = 'rgba(15, 15, 30, 0.95)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = 'rgba(100, 200, 255, 0.05)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw simulation elements
+                drawPressureField();
+                drawStreamlines();
+                updateParticles();
+                drawVorticity();
+                drawObject();
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Event listeners for controls
+        document.getElementById('objectSelect').addEventListener('change', (e) => {
+            currentObject = e.target.value;
+            updateFlowField();
+        });
+        
+        document.getElementById('windSpeed').addEventListener('input', (e) => {
+            windSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = windSpeed + ' m/s';
+            updateFlowField();
+        });
+        
+        document.getElementById('reynolds').addEventListener('input', (e) => {
+            reynolds = parseFloat(e.target.value);
+            document.getElementById('reynoldsValue').textContent = reynolds;
+            updateFlowField();
+        });
+        
+        document.getElementById('density').addEventListener('input', (e) => {
+            density = parseFloat(e.target.value);
+            document.getElementById('densityValue').textContent = density.toFixed(1) + ' kg/m³';
+            updateFlowField();
+        });
+        
+        document.getElementById('angle').addEventListener('input', (e) => {
+            angle = parseFloat(e.target.value);
+            document.getElementById('angleValue').textContent = angle + '°';
+            updateFlowField();
+        });
+        
+        document.getElementById('objectSize').addEventListener('input', (e) => {
+            objectSize = parseFloat(e.target.value);
+            document.getElementById('sizeValue').textContent = objectSize.toFixed(1) + 'x';
+            updateFlowField();
+        });
+        
+        document.getElementById('particleDensity').addEventListener('input', (e) => {
+            particleDensity = parseInt(e.target.value);
+            document.getElementById('particleDensityValue').textContent = particleDensity;
+            initializeSimulation();
+        });
+        
+        // Visualization toggles
+        document.getElementById('showStreamlines').addEventListener('change', (e) => {
+            showStreamlines = e.target.checked;
+        });
+        
+        document.getElementById('showParticles').addEventListener('change', (e) => {
+            showParticles = e.target.checked;
+        });
+        
+        document.getElementById('showPressure').addEventListener('change', (e) => {
+            showPressure = e.target.checked;
+        });
+        
+        document.getElementById('showVorticity').addEventListener('change', (e) => {
+            showVorticity = e.target.checked;
+        });
+        
+        // Mouse interaction for object dragging
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const dist = Math.sqrt((mouseX - objectX) ** 2 + (mouseY - objectY) ** 2);
+            if (dist < 60 * objectSize) {
+                isDragging = true;
+                dragStartX = mouseX - objectX;
+                dragStartY = mouseY - objectY;
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                objectX = e.clientX - rect.left - dragStartX;
+                objectY = e.clientY - rect.top - dragStartY;
+                updateFlowField();
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        // Utility functions
+        function toggleAnimation() {
+            isPaused = !isPaused;
+        }
+        
+        function resetSimulation() {
+            windSpeed = 50;
+            reynolds = 10000;
+            density = 1.2;
+            angle = 0;
+            objectSize = 1;
+            
+            document.getElementById('windSpeed').value = windSpeed;
+            document.getElementById('speedValue').textContent = windSpeed + ' m/s';
+            document.getElementById('reynolds').value = reynolds;
+            document.getElementById('reynoldsValue').textContent = reynolds;
+            document.getElementById('density').value = density;
+            document.getElementById('densityValue').textContent = density.toFixed(1) + ' kg/m³';
+            document.getElementById('angle').value = angle;
+            document.getElementById('angleValue').textContent = angle + '°';
+            document.getElementById('objectSize').value = objectSize;
+            document.getElementById('sizeValue').textContent = objectSize.toFixed(1) + 'x';
+            
+            objectX = canvas.width * 0.3;
+            objectY = canvas.height * 0.5;
+            
+            initializeSimulation();
+        }
+        
+        function loadPreset(preset) {
+            switch(preset) {
+                case 'subsonic':
+                    windSpeed = 100;
+                    reynolds = 50000;
+                    break;
+                case 'transonic':
+                    windSpeed = 180;
+                    reynolds = 80000;
+                    break;
+                case 'laminar':
+                    windSpeed = 30;
+                    reynolds = 1000;
+                    break;
+                case 'turbulent':
+                    windSpeed = 80;
+                    reynolds = 100000;
+                    break;
+            }
+            
+            document.getElementById('windSpeed').value = windSpeed;
+            document.getElementById('speedValue').textContent = windSpeed + ' m/s';
+            document.getElementById('reynolds').value = reynolds;
+            document.getElementById('reynoldsValue').textContent = reynolds;
+            
+            updateFlowField();
+        }
+        
+        function captureFrame() {
+            const link = document.createElement('a');
+            link.download = 'aerodynamic_analysis.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        function exportData() {
+            const data = {
+                object: currentObject,
+                parameters: {
+                    windSpeed: windSpeed,
+                    reynolds: reynolds,
+                    density: density,
+                    angleOfAttack: angle,
+                    objectSize: objectSize
+                },
+                coefficients: {
+                    drag: document.getElementById('dragCoeff').textContent,
+                    lift: document.getElementById('liftCoeff').textContent
+                },
+                analysis: {
+                    pressureDifferential: document.getElementById('pressureDiff').textContent,
+                    flowSeparation: document.getElementById('flowSeparation').textContent,
+                    wakeWidth: document.getElementById('wakeWidth').textContent
+                },
+                timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.download = 'aerodynamic_analysis.json';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+        }
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
