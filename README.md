@@ -1,17 +1,83 @@
-# React + Vite
+# AeroCow - Wind Tunnel Fluid Simulation
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A real-time wind tunnel fluid dynamics simulator built with React, Three.js, and WebGL shaders. Watch smoke flow around a 3D cow model with interactive visualization modes.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **GPU-accelerated Navier-Stokes fluid simulation** (256x256 resolution)
+- **Three visualization modes:**
+  - **Density** - Smoke/fluid visualization with cyan coloring
+  - **Shockwaves (Schlieren)** - Vorticity and pressure gradient visualization
+  - **Streamlines** - Particle-based flow visualization
+  - **All** - Combined view of all visualization modes
+- **Interactive cow obstacle** - Rotate the cow using TransformControls
+- **Wind speed control** - Adjust flow velocity in real-time
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** with React Three Fiber
+- **Three.js** for 3D rendering
+- **WebGL shaders** for GPU-based fluid simulation
+- **Leva** for UI controls
+- **Vite** for fast development builds
 
-## Expanding the ESLint configuration
+## How It Works
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-# AeroCow
+The simulation implements a 2D incompressible Navier-Stokes solver using GPU shaders:
+
+1. **Inflow** - Wind enters from the left boundary
+2. **Density Injection** - Smoke is continuously injected
+3. **Advection** - Velocity and density are advected using semi-Lagrangian method
+4. **Boundary Conditions** - No-slip condition at obstacle (cow) surface
+5. **Pressure Solve** - Jacobi iteration (20 iterations)
+6. **Gradient Subtraction** - Makes flow divergence-free
+
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## Controls
+
+- **Visualization dropdown** - Switch between Density, Shockwaves, Streamlines, or All
+- **Wind Speed slider** - Adjust the inflow velocity (0-10)
+- **Schlieren Intensity** - Adjust shockwave visualization sensitivity
+- **Transform Controls** - Click and drag to rotate the cow
+
+## Project Structure
+
+```
+src/
+├── App.jsx                      # Main application
+├── components/
+│   ├── Cow.jsx                  # 3D cow model
+│   ├── FluidVisualizer.jsx      # Density visualization
+│   ├── ShockwaveVisualizer.jsx  # Schlieren visualization
+│   └── Streamlines.jsx          # Particle streamlines
+├── simulation/
+│   ├── FluidSimulation.jsx      # Core simulation loop
+│   ├── FluidContext.js          # React context for FBO access
+│   └── ObstacleManager.jsx      # Obstacle rendering
+└── shaders/
+    ├── advection.frag           # Semi-Lagrangian advection
+    ├── boundary.frag            # Obstacle boundary conditions
+    ├── display.frag             # Density visualization
+    ├── divergence.frag          # Velocity divergence
+    ├── gradient.frag            # Pressure gradient
+    ├── inflow.frag              # Wind tunnel inflow
+    ├── jacobi.frag              # Pressure solver
+    ├── schlieren.frag           # Vorticity visualization
+    └── splat.frag               # Density injection
+```
+
+## License
+
+MIT

@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', '_archive']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -24,6 +24,10 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Disable rules that conflict with Three.js/WebGL patterns
+      // (shader uniform mutation in useFrame is the standard pattern)
+      'react-hooks/immutability': 'off',
+      'react-hooks/purity': 'off',
     },
   },
 ])
