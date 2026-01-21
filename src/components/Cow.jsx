@@ -1,23 +1,16 @@
-import React, { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import React, { forwardRef } from 'react'
 
-export function Cow(props) {
-    const group = useRef()
-
-    useFrame((state) => {
-        // group.current.rotation.y = Math.sin(state.clock.elapsedTime) * 0.2
-    })
-
+export const Cow = forwardRef(function Cow(props, ref) {
     const materialProps = {
         color: "#ffffff",
-        emissive: "#444444", // Slight glow
-        emissiveIntensity: 0.5,
+        emissive: "#00f3ff",
+        emissiveIntensity: 0.3,
         roughness: 0.2,
         metalness: 0.8
     }
 
     return (
-        <group ref={group} {...props}>
+        <group ref={ref} {...props}>
             {/* Body */}
             <mesh position={[0, 0, 0]}>
                 <boxGeometry args={[0.6, 0.4, 0.3]} />
@@ -57,4 +50,4 @@ export function Cow(props) {
             </mesh>
         </group>
     )
-}
+})

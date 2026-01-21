@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber'
-import React, { useContext, useMemo } from 'react'
-import { FluidContext } from '../simulation/FluidSimulation'
+import { useContext, useMemo } from 'react'
+import { FluidContext } from '../simulation/FluidContext'
 import * as THREE from 'three'
 import baseVert from '../shaders/base.vert?raw'
 import displayFrag from '../shaders/display.frag?raw'

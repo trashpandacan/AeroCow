@@ -1,8 +1,9 @@
-import React, { useRef, useMemo, useEffect } from 'react'
-import { useFrame, useThree, createPortal } from '@react-three/fiber'
+import { useMemo } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useFBO } from '@react-three/drei'
 import { ObstacleManager } from './ObstacleManager'
+import { FluidContext } from './FluidContext'
 
 // Import Shaders
 import baseVert from '../shaders/base.vert?raw'
@@ -10,15 +11,12 @@ import advectionFrag from '../shaders/advection.frag?raw'
 import divergenceFrag from '../shaders/divergence.frag?raw'
 import jacobiFrag from '../shaders/jacobi.frag?raw'
 import gradientFrag from '../shaders/gradient.frag?raw'
-import displayFrag from '../shaders/display.frag?raw'
 import splatFrag from '../shaders/splat.frag?raw'
 import boundaryFrag from '../shaders/boundary.frag?raw'
 import inflowFrag from '../shaders/inflow.frag?raw'
 
 const SIM_RES = 256
 const ITERATIONS = 20
-
-export const FluidContext = React.createContext()
 
 function createDoubleFBO(width, height, options) {
     const fbo1 = new THREE.WebGLRenderTarget(width, height, options)
@@ -34,8 +32,8 @@ function createDoubleFBO(width, height, options) {
     }
 }
 
-export function FluidSimulation({ children, obstacles, speed = 1.0 }) {
-    const { gl, size } = useThree()
+export function FluidSimulation({ children, obstacleRef, speed = 1.0 }) {
+    const { gl } = useThree()
 
     // FBO Options: FloatType for precision
     const options = useMemo(() => ({
@@ -138,7 +136,7 @@ export function FluidSimulation({ children, obstacles, speed = 1.0 }) {
     }, [])
     const mesh = scene.children[0]
 
-    useFrame(({ clock }) => {
+    useFrame(() => {
         const dt = 0.016 // Fixed dt for stability
 
         // 0. Inflow (Wind Tunnel)
@@ -149,15 +147,20 @@ export function FluidSimulation({ children, obstacles, speed = 1.0 }) {
         gl.render(scene, camera)
         velocity.swap()
 
-        // 0.5 Inject Smoke (Density)
+        // 0.5 Inject Smoke (Density) - multiple injection points for better coverage
         mesh.material = splatMat
-        splatMat.uniforms.uTarget.value = density.read.texture
-        splatMat.uniforms.point.value.set(0.0, 0.5) // Left side
-        splatMat.uniforms.color.value.set(0.2, 0.2, 0.2) // Constant smoke
-        splatMat.uniforms.radius.value = 0.05
-        gl.setRenderTarget(density.write)
-        gl.render(scene, camera)
-        density.swap()
+        splatMat.uniforms.radius.value = 0.015
+
+        // Inject at multiple vertical positions along left edge
+        const injectionPoints = [0.25, 0.4, 0.5, 0.6, 0.75]
+        for (const yPos of injectionPoints) {
+            splatMat.uniforms.uTarget.value = density.read.texture
+            splatMat.uniforms.point.value.set(0.02, yPos)
+            splatMat.uniforms.color.value.set(0.8, 0.8, 0.8) // Strong smoke injection
+            gl.setRenderTarget(density.write)
+            gl.render(scene, camera)
+            density.swap()
+        }
 
         // 1. Advect Velocity
         mesh.material = advectionMat
@@ -225,9 +228,7 @@ export function FluidSimulation({ children, obstacles, speed = 1.0 }) {
 
     return (
         <FluidContext.Provider value={{ density, velocity, pressure, obstacle }}>
-            <ObstacleManager targetFBO={obstacle}>
-                {obstacles}
-            </ObstacleManager>
+            <ObstacleManager targetFBO={obstacle} obstacleRef={obstacleRef} />
             {children}
         </FluidContext.Provider>
     )

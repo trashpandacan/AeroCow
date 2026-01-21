@@ -10,7 +10,7 @@ import { Cow } from './components/Cow'
 
 function App() {
   const { visualization, speed } = useControls({
-    visualization: { value: 'Streamlines', options: ['Density', 'Shockwaves', 'Streamlines', 'All'] },
+    visualization: { value: 'All', options: ['Density', 'Shockwaves', 'Streamlines', 'All'] },
     speed: { value: 2.0, min: 0, max: 10, step: 0.1, label: 'Wind Speed' }
   })
 
@@ -19,19 +19,25 @@ function App() {
   return (
     <>
       <Leva collapsed={false} />
-      <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+      <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
         <color attach="background" args={['#050510']} />
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[5, 5, 5]} intensity={1} />
 
         <Suspense fallback={null}>
-          <FluidSimulation obstacles={<Cow scale={2} />} speed={speed}>
-            <TransformControls mode="rotate" object={cowRef.current}>
-              <Cow ref={cowRef} scale={2} />
-            </TransformControls>
+          <FluidSimulation obstacleRef={cowRef} speed={speed}>
+            {/* Visualizations render behind the cow */}
             {(visualization === 'Density' || visualization === 'All') && <FluidVisualizer />}
             {(visualization === 'Shockwaves' || visualization === 'All') && <ShockwaveVisualizer />}
             {(visualization === 'Streamlines' || visualization === 'All') && <Streamlines />}
+
+            {/* Visible cow with transform controls */}
+            <TransformControls mode="rotate">
+              <Cow ref={cowRef} scale={2} />
+            </TransformControls>
           </FluidSimulation>
         </Suspense>
+
         <OrbitControls enableRotate={false} enablePan={false} />
         <Stats />
       </Canvas>
